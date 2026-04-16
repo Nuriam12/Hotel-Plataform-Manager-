@@ -43,6 +43,8 @@ class ConsumptionService:
         if product.current_stock < data.quantity:
             raise ValueError("Stock insuficiente para registrar el consumo.")
 
+        unit_price = product.price
+
         product.current_stock -= data.quantity
 
         movement_note = f"Consumo estancia id={data.stay_id}"
@@ -65,7 +67,7 @@ class ConsumptionService:
             product_id=data.product_id,
             created_by=user_id,
             quantity=data.quantity,
-            unit_price=data.unit_price,
+            unit_price=unit_price,
         )
 
         try:

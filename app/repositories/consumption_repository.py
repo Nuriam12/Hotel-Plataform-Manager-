@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.client_consumption import ClientConsumption
-from app.schemas.consumption import ClientConsumptionCreate, ClientConsumptionRead
 
 
 class ConsumptionRepository:

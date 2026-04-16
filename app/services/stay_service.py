@@ -52,6 +52,11 @@ class StayService:
                     "La reserva no coincide con la habitación o el cliente indicados."
                 )
 
+        if room.status == "occupied":
+            raise ValueError(
+                "La habitación ya está ocupada."
+            )
+
         if await self.stay_repository.has_active_stay_for_room(
             hotel_id, data.room_id
         ):
@@ -78,6 +83,7 @@ class StayService:
 
         try:
             created = await self.stay_repository.create(stay)
+            room.status = "occupied"
             await self.db.commit()
             await self.db.refresh(created)
             return created
@@ -94,8 +100,15 @@ class StayService:
         if stay.checkout_datetime is not None:
             raise ValueError("Esta estancia ya tiene check-out registrado.")
 
+        room = await self.room_repository.get_by_id_and_hotel(
+            hotel_id, stay.room_id
+        )
+        if room is None:
+            raise LookupError("La habitación asociada no existe.")
+
         stay.checkout_datetime = datetime.now(timezone.utc).replace(tzinfo=None)
-        stay.status = "completado"
+        stay.status = "completed"
+        room.status = "available"
 
         await self.db.commit()
         await self.db.refresh(stay)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependency import AdminUser
+from app.core.dependency import AdminUser, StaffUser
 from app.schemas.inventory import (
     InventoryMovementCreate,
     InventoryMovementRead,
@@ -42,7 +42,7 @@ async def create_product(
 
 @router.get("/products/", response_model=list[InventoryProductRead])
 async def list_products(
-    current_user: AdminUser,
+    current_user: StaffUser,
     service: InventoryService = Depends(get_inventory_service),
 ):
     return await service.list_products(current_user.hotel_id)
@@ -51,7 +51,7 @@ async def list_products(
 @router.get("/products/{product_id}", response_model=InventoryProductRead)
 async def get_product(
     product_id: int,
-    current_user: AdminUser,
+    current_user: StaffUser,
     service: InventoryService = Depends(get_inventory_service),
 ):
     product = await service.get_product_by_id(
@@ -72,7 +72,7 @@ async def get_product(
 )
 async def create_movement(
     payload: InventoryMovementCreate,
-    current_user: AdminUser,
+    current_user: StaffUser,
     service: InventoryService = Depends(get_inventory_service),
 ):
     try:

@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependency import get_current_user
+from app.core.database import get_db
+from app.core.dependency import AdminUser, StaffUser
 from app.schemas.room import RoomCreate, RoomRead
 from app.services.room_service import RoomService
-from app.core.database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.dependency import StaffUser 
 
 
 router = APIRouter(prefix="/rooms", tags=["Rooms"])
@@ -13,10 +12,10 @@ router = APIRouter(prefix="/rooms", tags=["Rooms"])
 def get_room_service(db: AsyncSession = Depends(get_db)) -> RoomService:
     return RoomService(db)
 
-@router.post("/", response_model=RoomRead, status_code=status.HTTP_201_CREATED) #con esto estamos creando la habitacion 
+@router.post("/", response_model=RoomRead, status_code=status.HTTP_201_CREATED)
 async def create_room(
     payload: RoomCreate,
-    current_user : StaffUser,
+    current_user: AdminUser,
     service: RoomService = Depends(get_room_service),
 ):
     try: 

@@ -19,6 +19,7 @@ class InventoryService:
             hotel_id=hotel_id,
             name=data.name,
             category=data.category,
+            price=data.price,
             current_stock=0, 
         )
         try:

@@ -1,9 +1,11 @@
+from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Literal
 
 class InventoryProductCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     category: str | None = Field(default=None, min_length=1, max_length=50)
+    price: Decimal = Field(..., gt=0, decimal_places=2)
 
 class InventoryProductRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -12,6 +14,7 @@ class InventoryProductRead(BaseModel):
     hotel_id: int
     name: str
     category: str | None
+    price: Decimal
     current_stock: int
 
 class InventoryMovementCreate(BaseModel):
