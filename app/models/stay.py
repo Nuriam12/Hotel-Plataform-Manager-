@@ -1,4 +1,4 @@
-from sqlalchemy import String, Numeric, ForeignKey, Text, DateTime
+from sqlalchemy import String, Numeric, ForeignKey, Text, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -20,3 +20,6 @@ class Stay(TimestampMixin, Base):
     price_per_night: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     notes: Mapped[str | None] = mapped_column(Text)
+    account_number: Mapped[int | None] = mapped_column(Integer)
+    additional_charge: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    additional_charge_notes: Mapped[str | None] = mapped_column(Text)

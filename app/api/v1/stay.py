@@ -3,7 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependency import StaffUser
-from app.schemas.stay import StayCreate, StayRead
+from app.schemas.stay import (
+    AdditionalChargeUpdate,
+    StayAccountResponse,
+    StayCreate,
+    StayRead,
+)
 from app.services.stay_service import StayService
 
 
@@ -27,15 +32,9 @@ async def check_in(
             payload,
         )
     except LookupError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc),
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.post("/{stay_id}/checkout", response_model=StayRead)
@@ -47,15 +46,38 @@ async def check_out(
     try:
         return await service.check_out(current_user.hotel_id, stay_id)
     except LookupError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc),
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.patch("/{stay_id}/additional-charge", response_model=StayRead)
+async def update_additional_charge(
+    stay_id: int,
+    payload: AdditionalChargeUpdate,
+    current_user: StaffUser,
+    service: StayService = Depends(get_stay_service),
+):
+    try:
+        return await service.update_additional_charge(
+            current_user.hotel_id, stay_id, payload
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.get("/{stay_id}/account", response_model=StayAccountResponse)
+async def get_account(
+    stay_id: int,
+    current_user: StaffUser,
+    service: StayService = Depends(get_stay_service),
+):
+    try:
+        return await service.get_account(current_user.hotel_id, stay_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.get("/", response_model=list[StayRead])
