@@ -76,3 +76,19 @@ class ReservationService:
         return await self.reservation_repository.get_by_id_and_hotel(
             hotel_id, reservation_id
         )
+
+    async def cancel_reservation(
+        self, hotel_id: int, reservation_id: int
+    ) -> Reservation:
+        reservation = await self.reservation_repository.get_by_id_and_hotel(
+            hotel_id, reservation_id
+        )
+        if reservation is None:
+            raise LookupError("Reserva no encontrada.")
+        if reservation.status == "cancelled":
+            raise ValueError("La reserva ya está cancelada.")
+
+        reservation.status = "cancelled"
+        await self.db.commit()
+        await self.db.refresh(reservation)
+        return reservation

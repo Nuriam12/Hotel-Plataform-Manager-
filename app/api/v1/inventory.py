@@ -8,6 +8,7 @@ from app.schemas.inventory import (
     InventoryMovementRead,
     InventoryProductCreate,
     InventoryProductRead,
+    InventoryProductUpdate,
 )
 from app.services.inventory_service import InventoryService
 
@@ -63,6 +64,22 @@ async def get_product(
             detail="Producto no encontrado",
         )
     return product
+
+
+@router.patch("/products/{product_id}", response_model=InventoryProductRead)
+async def update_product(
+    product_id: int,
+    payload: InventoryProductUpdate,
+    current_user: AdminUser,
+    service: InventoryService = Depends(get_inventory_service),
+):
+    try:
+        return await service.update_product(current_user.hotel_id, product_id, payload)
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
 
 
 @router.post(

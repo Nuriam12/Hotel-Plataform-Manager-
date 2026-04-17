@@ -30,6 +30,17 @@ async def list_clients(
 ):
     return await service.list_clients(current_user.hotel_id)
 
+@router.get("/search", response_model=list[ClientRead])
+async def search_clients_by_dni(
+    dni: str,
+    current_user : StaffUser,
+    service: ClientService = Depends(get_client_service),
+):
+    clients = await service.search_clients_by_dni(current_user.hotel_id, dni)
+    if not clients:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clientes no encontrados")
+    return clients
+
 @router.get("/{client_id}", response_model=ClientRead)
 async def get_client_by_id(
     client_id: int,
@@ -40,4 +51,3 @@ async def get_client_by_id(
     if client is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
     return client
- 

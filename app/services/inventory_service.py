@@ -5,7 +5,7 @@ from app.repositories.inventory_product_repository import InventoryProductReposi
 from app.repositories.inventory_movement_repository import InventoryMovementRepository
 from app.models.inventory_product import InventoryProduct
 from app.models.inventory_movement import InventoryMovement, MovementType
-from app.schemas.inventory import InventoryProductCreate, InventoryMovementCreate
+from app.schemas.inventory import InventoryProductCreate, InventoryProductUpdate, InventoryMovementCreate
 
 
 class InventoryService:
@@ -36,6 +36,24 @@ class InventoryService:
 
     async def get_product_by_id(self, hotel_id: int, product_id: int) -> InventoryProduct | None:
         return await self.product_repository.get_by_id_and_hotel(hotel_id, product_id)
+
+    async def update_product(
+        self, hotel_id: int, product_id: int, data: InventoryProductUpdate
+    ) -> InventoryProduct:
+        product = await self.product_repository.get_by_id_and_hotel(hotel_id, product_id)
+        if product is None:
+            raise LookupError("Producto no encontrado.")
+
+        if data.name is not None:
+            product.name = data.name
+        if data.category is not None:
+            product.category = data.category
+        if data.price is not None:
+            product.price = data.price
+
+        await self.db.commit()
+        await self.db.refresh(product)
+        return product
 
     async def register_movement(self, hotel_id: int,user_id: int, data: InventoryMovementCreate) -> InventoryMovement:
         product = await self.product_repository.get_by_id_and_hotel(hotel_id, data.product_id)

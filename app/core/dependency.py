@@ -38,10 +38,10 @@ async def get_current_user(
         )
     return user
 
-STAFF_ROLES = frozenset({"admin", "worker"})
+STAFF_ROLES = frozenset({"ADMINISTRADOR", "TRABAJADOR"})
 
 async def require_admin(user: User = Depends(get_current_user)) -> User:
-    if user.role != "admin":
+    if user.role != "ADMINISTRADOR":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can access this resource",

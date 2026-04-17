@@ -19,3 +19,6 @@ class ClientConsumptionRead(BaseModel):
     quantity: int
     unit_price: Decimal
     created_at: datetime
+    is_cancelled: bool
+    cancelled_at: datetime | None
+    cancelled_by: int | None

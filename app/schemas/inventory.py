@@ -7,6 +7,12 @@ class InventoryProductCreate(BaseModel):
     category: str | None = Field(default=None, min_length=1, max_length=50)
     price: Decimal = Field(..., gt=0, decimal_places=2)
 
+
+class InventoryProductUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    category: str | None = Field(default=None, min_length=1, max_length=50)
+    price: Decimal | None = Field(default=None, gt=0, decimal_places=2)
+
 class InventoryProductRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     

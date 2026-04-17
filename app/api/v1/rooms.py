@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependency import AdminUser, StaffUser
-from app.schemas.room import RoomCreate, RoomRead
+from app.schemas.room import RoomCreate, RoomRead, RoomUpdate
 from app.schemas.stay import RoomBoardItem
 from app.services.room_service import RoomService
 from app.services.stay_service import StayService
@@ -31,6 +31,21 @@ async def create_room(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return room
+
+
+@router.patch("/{room_id}", response_model=RoomRead)
+async def update_room(
+    room_id: int,
+    payload: RoomUpdate,
+    current_user: AdminUser,
+    service: RoomService = Depends(get_room_service),
+):
+    try:
+        return await service.update_room(current_user.hotel_id, room_id, payload)
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.get("/board", response_model=list[RoomBoardItem])

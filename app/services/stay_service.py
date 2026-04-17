@@ -12,7 +12,7 @@ from app.repositories.inventory_product_repository import InventoryProductReposi
 from app.repositories.reservation_repository import ReservationRepository
 from app.repositories.room_repository import RoomRepository
 from app.repositories.stay_repository import StayRepository
-from app.schemas.stay import AdditionalChargeUpdate, StayAccountResponse, StayCreate
+from app.schemas.stay import AdditionalChargeUpdate, HotelSummaryResponse, StayAccountResponse, StayCreate
 
 
 class StayService:
@@ -199,7 +199,7 @@ class StayService:
                     "unit_price": Decimal(str(c.unit_price)),
                     "subtotal": subtotal,
                     "created_at": c.created_at,
-                    "is_cancelled": False,
+                    "is_cancelled": c.is_cancelled,
                 }
             )
 
@@ -207,6 +207,7 @@ class StayService:
         nights_cost = Decimal(str(stay.price_per_night)) * nights
         consumptions_total = sum(
             line["subtotal"] for line in consumption_lines
+            if not line["is_cancelled"]
         )
         additional = Decimal(str(stay.additional_charge)) if stay.additional_charge else Decimal("0")
         grand_total = nights_cost + consumptions_total + additional
@@ -281,8 +282,38 @@ class StayService:
     # Listados                                                             #
     # ------------------------------------------------------------------ #
 
-    async def list_stays(self, hotel_id: int) -> list[Stay]:
-        return await self.stay_repository.list_by_hotel(hotel_id)
+    async def list_stays(
+        self, hotel_id: int, status: str | None = None
+    ) -> list[Stay]:
+        return await self.stay_repository.list_by_hotel_filtered(hotel_id, status)
 
     async def get_stay_by_id(self, hotel_id: int, stay_id: int) -> Stay | None:
         return await self.stay_repository.get_by_id_and_hotel(hotel_id, stay_id)
+
+    async def get_summary(self, hotel_id: int) -> HotelSummaryResponse:
+        rooms = await self.room_repository.list_by_hotel(hotel_id)
+        rooms_total = len(rooms)
+        rooms_available = sum(1 for r in rooms if r.status == "available")
+        rooms_occupied = rooms_total - rooms_available
+
+        active_stays = await self.stay_repository.list_by_hotel_filtered(hotel_id, status="active")
+        stays_active = len(active_stays)
+
+        completed_this_month = await self.stay_repository.list_completed_this_month(hotel_id)
+        stays_completed_this_month = len(completed_this_month)
+
+        revenue = Decimal("0")
+        for stay in completed_this_month:
+            nights = self._calculate_nights(stay.checkin_datetime, stay.checkout_datetime)
+            revenue += Decimal(str(stay.price_per_night)) * nights
+            if stay.additional_charge:
+                revenue += Decimal(str(stay.additional_charge))
+
+        return HotelSummaryResponse(
+            rooms_total=rooms_total,
+            rooms_available=rooms_available,
+            rooms_occupied=rooms_occupied,
+            stays_active=stays_active,
+            stays_completed_this_month=stays_completed_this_month,
+            revenue_this_month=revenue,
+        )

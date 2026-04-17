@@ -8,7 +8,7 @@ class StayRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, stay: Stay) -> Stay:
+    async def create(self, stay: Stay) -> Stay: #crea un stay en la base de datos 
         self.db.add(stay)
         await self.db.flush()
         return stay
@@ -19,6 +19,19 @@ class StayRepository:
             .where(Stay.hotel_id == hotel_id)
             .order_by(Stay.checkin_datetime.desc(), Stay.id.desc())
         )
+        return list(result.scalars().all())
+
+    async def list_by_hotel_filtered(
+        self, hotel_id: int, status: str | None = None
+    ) -> list[Stay]:
+        query = (
+            select(Stay)
+            .where(Stay.hotel_id == hotel_id)
+            .order_by(Stay.checkin_datetime.desc(), Stay.id.desc())
+        )
+        if status is not None:
+            query = query.where(Stay.status == status)
+        result = await self.db.execute(query)
         return list(result.scalars().all())
 
     async def get_by_id_and_hotel(self, hotel_id: int, stay_id: int) -> Stay | None:
@@ -48,6 +61,20 @@ class StayRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def list_completed_this_month(self, hotel_id: int) -> list[Stay]:
+        from datetime import datetime
+
+        now = datetime.utcnow()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        result = await self.db.execute(
+            select(Stay).where(
+                Stay.hotel_id == hotel_id,
+                Stay.status == "completed",
+                Stay.checkout_datetime >= month_start,
+            )
+        )
+        return list(result.scalars().all())
 
     async def next_account_number(self, hotel_id: int) -> int:
         result = await self.db.execute(

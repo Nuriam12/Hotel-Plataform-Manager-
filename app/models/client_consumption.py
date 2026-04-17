@@ -1,8 +1,8 @@
-from sqlalchemy import Integer, Numeric, ForeignKey
+from sqlalchemy import Integer, Numeric, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 from app.models.base_model import TimestampMixin
-
+from datetime import datetime
 
 class ClientConsumption(TimestampMixin, Base):
     __tablename__ = "client_consumptions"
@@ -14,3 +14,6 @@ class ClientConsumption(TimestampMixin, Base):
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime)
+    cancelled_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))

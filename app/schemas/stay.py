@@ -127,3 +127,16 @@ class StayAccountResponse(BaseModel):
     client: ClientInfo
     consumptions: list[ConsumptionLine]
     totals: AccountTotals
+
+
+# ------------------------------------------------------------------ #
+# Resumen del hotel (reportes)                                         #
+# ------------------------------------------------------------------ #
+
+class HotelSummaryResponse(BaseModel):
+    rooms_total: int
+    rooms_available: int
+    rooms_occupied: int
+    stays_active: int
+    stays_completed_this_month: int
+    revenue_this_month: Decimal

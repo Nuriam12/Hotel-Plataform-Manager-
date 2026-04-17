@@ -89,3 +89,47 @@ class ConsumptionService:
                 hotel_id, stay_id
             )
         return await self.consumption_repository.list_by_hotel(hotel_id)
+
+    async def cancel_consumption(
+        self, hotel_id: int, user_id: int, consumption_id: int
+    ) -> ClientConsumption:
+        from datetime import datetime, timezone
+
+        consumption = await self.consumption_repository.get_by_id_and_hotel(hotel_id, consumption_id)
+        if consumption is None:
+            raise LookupError("El consumo no existe en este hotel.")
+        if consumption.is_cancelled:
+            raise ValueError("El consumo ya está cancelado.")
+        
+        stay = await self.stay_repository.get_by_id_and_hotel(hotel_id, consumption.stay_id)
+        if stay is None:
+            raise LookupError("La estancia no existe en este hotel.")
+        if stay.status == "completed":
+            raise ValueError("No se puede cancelar un consumo en una estancia completada.")
+        
+        product =await self.product_repository.get_by_id_and_hotel(hotel_id, consumption.product_id) 
+
+        if product is None:
+            raise LookupError("El producto no existe en este hotel.")
+        if product.current_stock < consumption.quantity:
+            raise ValueError("No hay suficiente stock para cancelar el consumo.")
+
+        consumption.is_cancelled = True
+        consumption.cancelled_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        consumption.cancelled_by = user_id
+
+        product.current_stock += consumption.quantity #se restaura el stock del producto
+
+        reverse_movement = InventoryMovement(
+        hotel_id=hotel_id,
+            product_id=consumption.product_id,
+            created_by=user_id,
+            type=MovementType.OUT if False else MovementType.IN,
+            quantity=consumption.quantity,
+            notes=f"Anulación consumo id={consumption_id}, estancia id={consumption.stay_id}",
+    )
+        await self.movement_repository.create(reverse_movement)
+        await self.db.commit()
+        await self.db.refresh(consumption)
+        return consumption
+

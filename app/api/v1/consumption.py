@@ -54,3 +54,20 @@ async def list_consumptions(
         current_user.hotel_id,
         stay_id,
     )
+
+@router.post("/{consumption_id}/cancel", response_model=ClientConsumptionRead)
+async def cancel_consumption(
+    consumption_id: int,
+    current_user: StaffUser,
+    service: ConsumptionService = Depends(get_consumption_service),
+):
+    try: 
+        return await service.cancel_consumption(
+            current_user.hotel_id,
+            current_user.id,
+            consumption_id,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

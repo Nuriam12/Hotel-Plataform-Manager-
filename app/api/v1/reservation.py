@@ -43,3 +43,17 @@ async def get_reservation_by_id(
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reserva no encontrada")
     return row
+
+
+@router.post("/{reservation_id}/cancel", response_model=ReservationRead)
+async def cancel_reservation(
+    reservation_id: int,
+    current_user: StaffUser,
+    service: ReservationService = Depends(get_reservation_service),
+):
+    try:
+        return await service.cancel_reservation(current_user.hotel_id, reservation_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from app.repositories.room_repository import RoomRepository
-from app.schemas.room import RoomCreate
+from app.schemas.room import RoomCreate, RoomUpdate
 from app.models.room import Room
 
 class RoomService:
@@ -33,3 +33,21 @@ class RoomService:
 
     async def get_room_by_id(self, hotel_id: int, room_id: int) -> Room | None:
         return await self.room_repository.get_by_id_and_hotel(hotel_id, room_id)
+
+    async def update_room(self, hotel_id: int, room_id: int, data: RoomUpdate) -> Room:
+        room = await self.room_repository.get_by_id_and_hotel(hotel_id, room_id)
+        if room is None:
+            raise LookupError("Habitación no encontrada.")
+        if room.status == "occupied":
+            raise ValueError("No se puede modificar una habitación ocupada.")
+
+        if data.floor is not None:
+            room.floor = data.floor
+        if data.room_type is not None:
+            room.room_type = data.room_type
+        if data.price_per_night is not None:
+            room.price_per_night = data.price_per_night
+
+        await self.db.commit()
+        await self.db.refresh(room)
+        return room
