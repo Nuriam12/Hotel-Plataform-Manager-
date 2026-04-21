@@ -30,3 +30,7 @@ class ClientService:
 
     async def get_client_by_id(self, hotel_id: int, client_id: int) -> Client | None:
         return await self.client_repository.get_by_id_and_hotel(hotel_id, client_id)
+
+    async def search_clients_by_dni(self, hotel_id: int, dni: str) -> Client | None:
+        return await self.client_repository.get_by_dni(hotel_id, dni)
+    
