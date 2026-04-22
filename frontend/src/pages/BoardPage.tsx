@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchRoomBoard } from '../api/rooms'
 import { useAuthStore } from '../stores/authStore'
 import RoomCard from '../components/RoomCard'
 import LoadingSpinner from '../components/LoadingSpinner'
+import AccountModal from '../components/AccountModal'
 import type { RoomBoardItem } from '../types/room'
 
 // Pequeño componente para las estadísticas del encabezado
@@ -33,6 +35,7 @@ function StatBadge({
 export default function BoardPage() {
   const { username, role, logout } = useAuthStore()
   const navigate = useNavigate()
+  const [selectedStayId, setSelectedStayId] = useState<number | null>(null)
 
   const { data: rooms, isLoading, isError, refetch } = useQuery({
     queryKey: ['rooms', 'board'],
@@ -147,10 +150,7 @@ export default function BoardPage() {
                   <RoomCard
                     key={room.id}
                     room={room}
-                    onOpenAccount={(stayId) => {
-                      // F3: modal de cuenta corriente — próxima sesión
-                      console.log('Abrir cuenta corriente, stay_id:', stayId)
-                    }}
+                    onOpenAccount={(stayId) => setSelectedStayId(stayId)}
                   />
                 ))}
             </div>
@@ -165,6 +165,13 @@ export default function BoardPage() {
         )}
 
       </main>
+
+      {selectedStayId != null && (
+        <AccountModal
+          stayId={selectedStayId}
+          onClose={() => setSelectedStayId(null)}
+        />
+      )}
     </div>
   )
 }
