@@ -36,6 +36,9 @@ app.include_router(consumption_router, prefix="/api/v1")
 async def root():
     return {"message": f"{settings.PROJECT_NAME} is running"}
 
+@app.get("/myNigga")
+async def myNigga():
+    return {"message": "myNigga is running"}
 
 if __name__ == "__main__":
     import uvicorn
